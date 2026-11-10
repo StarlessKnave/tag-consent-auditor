@@ -1,9 +1,11 @@
 :root{
+  color-scheme:light;
   --bg:#ffffff;--surface:#f8fafc;--line:#e2e8f0;--line2:#f1f5f9;--text:#0f172a;--muted:#475569;--soft:#64748b;
   --accent:#2563eb;--accent-text:#ffffff;--fail:#dc2626;--warn:#d97706;--pass:#059669;--info:#2563eb;
   --fail-bg:#fef2f2;--warn-bg:#fffbeb;--pass-bg:#ecfdf5;--info-bg:#eff6ff;--btn:#ffffff;--btn-hover:#f1f5f9;
 }
 [data-theme="dark"]{
+  color-scheme:dark;
   --bg:#0b1020;--surface:#131b33;--line:rgba(255,255,255,.1);--line2:rgba(255,255,255,.06);--text:#e8ecf5;--muted:#a7b0c7;--soft:#8b95ad;
   --accent:#60a5fa;--accent-text:#0b1020;--fail:#f87171;--warn:#fbbf24;--pass:#34d399;--info:#7dd3fc;
   --fail-bg:rgba(248,113,113,.12);--warn-bg:rgba(251,191,36,.12);--pass-bg:rgba(52,211,153,.12);--info-bg:rgba(125,211,252,.1);--btn:rgba(255,255,255,.04);--btn-hover:rgba(255,255,255,.1);
