@@ -12,6 +12,14 @@ Open any page, click the extension, and it shows:
 
 Everything runs locally in your browser. The extension only observes; it never changes what a page sends, and no data leaves your machine.
 
+## Screenshots
+
+| A well set-up site (light mode) | A badly set-up site (dark mode) |
+| --- | --- |
+| <img src="docs/screenshots/popup-good-light.png" alt="Popup showing a score of 100 and 'Looking healthy'" width="380"> | <img src="docs/screenshots/popup-bad-dark.png" alt="Popup showing a score of 18 with 3 critical consent issues" width="380"> |
+
+Both screenshots come from the practice pages in `test-pages/`, which use fake tag IDs.
+
 ## Install (developer mode)
 
 1. Download or clone this folder.
