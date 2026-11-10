@@ -45,6 +45,10 @@ Full testing steps: see [TESTING.md](TESTING.md).
 
 Built by [Matvey Lutsenko](https://matveylutsenko.com).
 
+## Privacy
+
+The extension collects no data. Everything runs locally in your browser. See the [privacy policy](PRIVACY.md).
+
 ## License
 
 MIT. See [LICENSE](LICENSE).
