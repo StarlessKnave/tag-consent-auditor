@@ -1,0 +1,15 @@
+<!DOCTYPE html><html><head><title>Bad site</title>
+<script async src="https://consent.cookiebot.com/uc.js?cbid=test"></script>
+<script async src="https://www.googletagmanager.com/gtm.js?id=GTM-BAD111"></script>
+<script async src="https://www.googletagmanager.com/gtm.js?id=GTM-BAD222"></script>
+<script>
+window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}
+const ping=u=>new Image().src=u;
+document.cookie='_ga=GA1.1.999; path=/'; document.cookie='_fbp=fb.1.999; path=/'; document.cookie='_gcl_au=1.1.9; path=/';
+ping('https://www.google-analytics.com/g/collect?v=2&tid=G-BAD999&en=page_view&_p=1');
+ping('https://www.google-analytics.com/g/collect?v=2&tid=G-BAD999&en=page_view&_p=2');
+ping('https://www.facebook.com/tr?id=777&ev=PageView');
+ping('https://snap.licdn.com/li.lms-analytics/insight.min.js');
+setTimeout(()=>{gtag('consent','default',{ad_storage:'denied',analytics_storage:'denied'});},600);
+setTimeout(()=>ping('https://www.googleadservices.com/pagead/conversion/555/?label=xyz'),900);
+</script></head><body><h1>Bad site</h1></body></html>

@@ -1,0 +1,12 @@
+# Automated test output
+automated-test/*-popup.png
+
+# Python
+__pycache__/
+*.pyc
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

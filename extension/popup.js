@@ -1,0 +1,115 @@
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+let tabId = null, last = null;
+
+async function resolveTab() {
+  const p = new URLSearchParams(location.search);
+  if (p.get('tabId')) return Number(p.get('tabId'));
+  const [t] = await chrome.tabs.query({ active: true, currentWindow: true });
+  return t ? t.id : null;
+}
+
+function rel(t, start) {
+  const s = (t - start) / 1000;
+  return (s >= 0 ? '+' : '') + s.toFixed(1) + 's';
+}
+
+function render(a) {
+  last = a;
+  try { $('#host').textContent = new URL(a.url).host || a.url; } catch (e) { $('#host').textContent = a.url || '—'; }
+
+  const n = sev => a.checks.filter(c => c.sev === sev).length;
+  const fails = n('fail'), warns = n('warn');
+  $('#cFail').textContent = fails; $('#cWarn').textContent = warns; $('#cPass').textContent = n('pass');
+  $('#cTags').textContent = a.tags.length;
+  const sc = a.score;
+  $('#score').textContent = sc === null ? '–' : sc;
+  const ring = $('#ringval');
+  ring.style.strokeDashoffset = sc === null ? 327 : 327 * (1 - sc / 100);
+  ring.style.stroke = sc === null ? 'transparent' : sc >= 80 ? 'var(--pass)' : sc >= 55 ? 'var(--warn)' : 'var(--fail)';
+  $('#verdict').textContent = sc === null ? 'No tags found yet'
+    : fails ? `${fails} critical issue${fails > 1 ? 's' : ''} to fix`
+    : warns ? `${warns} thing${warns > 1 ? 's' : ''} to review`
+    : 'Looking healthy';
+
+  $('#issues').innerHTML = a.checks.length ? a.checks.map(c => `
+    <div class="row"><i class="dot ${c.sev}"></i><div><b>${esc(c.title)}</b>
+    ${c.detail ? `<p>${esc(c.detail)}</p>` : ''}${c.fix ? `<p class="fix">${esc(c.fix)}</p>` : ''}</div></div>`).join('')
+    : '<div class="empty">Waiting for the page to send data…</div>';
+
+  $('#tags').innerHTML = a.tags.length ? a.tags.map(t => {
+    const ev = Object.entries(t.events).map(([k, v]) => v > 1 ? `${k} ×${v}` : k).join(', ');
+    const loader = ['gtm', 'gtag', 'hotjar'].includes(t.vendor);
+    const status = t.hits ? `<span class="badge ok">Firing · ${t.hits}</span>` : loader ? `<span class="badge ok">Loaded</span>` : `<span class="badge idle">Loaded only</span>`;
+    return `<div class="row"><div><b>${esc(t.name)}</b><p>${esc(t.id || 'no ID')}${t.server ? ' · via ' + esc(t.server) : ''}${ev ? ' · ' + esc(ev) : ''}</p></div>${status}</div>`;
+  }).join('') : '<div class="empty">No measurement tags detected yet.</div>';
+
+  const c = a.consent;
+  const st = v => v ? `<span class="state ${esc(v)}">${esc(v)}</span>` : '—';
+  const keys = ['ad_storage', 'analytics_storage', 'ad_user_data', 'ad_personalization'];
+  const latest = {};
+  if (c.def) Object.assign(latest, c.def.params);
+  c.updates.forEach(u => Object.assign(latest, u.params));
+  const early = a.cookies.filter(k => k.owner && !k.existing && c.def && (c.grantT === null || k.t < c.grantT));
+  const note = k => k.existing ? ' · earlier visit' : early.includes(k) ? ' · before consent' : '';
+  $('#consent').innerHTML = `
+    <div class="sec">Overview</div>
+    <div class="kv"><span>Consent platform</span><b>${esc(c.cmp.join(', ') || 'None detected')}</b>
+    <span>Default set</span><b>${c.def ? 'Yes, at ' + rel(c.def.t, a.started) : 'No'}</b>
+    <span>Choice made</span><b>${c.updates.length ? (c.grantT ? 'Granted at ' + rel(c.grantT, a.started) : 'Denied / updated') : 'Not yet'}</b></div>
+    <div class="sec">Signals · default → current</div>
+    <div class="kv">${keys.map(k => `<span>${k}</span><b>${st(c.def && c.def.params[k])} → ${st(latest[k])}</b>`).join('')}</div>
+    <div class="sec">Cookies (${a.cookies.length})</div>
+    ${a.cookies.length ? a.cookies.map(k => `<div class="ck ${early.includes(k) ? 'early' : ''}"><b>${esc(k.name)}</b><i>${esc(k.owner || 'other')} · ${rel(k.t, a.started)}${note(k)}</i></div>`).join('') : '<div class="empty">No cookies readable by scripts.</div>'}`;
+
+  $('#timeline').innerHTML = a.timeline.length ? a.timeline.slice(0, 200).map(e => `
+    <div class="ev ${e.kind} ${e.beforeConsent && ['meta', 'linkedin', 'microsoft', 'tiktok'].includes(e.vendor) ? 'early' : ''}"><span class="ts">${rel(e.t, a.started)}</span>
+    <div><b>${esc(e.name)}</b><small>${esc(e.source)}</small></div></div>`).join('') : '<div class="empty">No events yet.</div>';
+}
+
+function report(a) {
+  const lines = [`Measurement audit — ${a.url}`, `Score: ${a.score ?? 'n/a'}/100`, ''];
+  for (const sev of ['fail', 'warn', 'info', 'pass']) {
+    const list = a.checks.filter(c => c.sev === sev);
+    if (!list.length) continue;
+    lines.push({ fail: 'CRITICAL', warn: 'WARNINGS', info: 'NOTES', pass: 'PASSED' }[sev]);
+    list.forEach(c => { lines.push(`- ${c.title}${c.detail ? ': ' + c.detail : ''}`); if (c.fix) lines.push(`  Fix: ${c.fix}`); });
+    lines.push('');
+  }
+  lines.push('TAGS');
+  a.tags.forEach(t => lines.push(`- ${t.name} ${t.id || ''} — ${t.hits ? t.hits + ' hits' : 'loaded only'}`));
+  lines.push('', 'Generated by Tag & Consent Auditor');
+  return lines.join('\n');
+}
+
+function toast(msg) {
+  const d = document.createElement('div'); d.className = 'toast'; d.textContent = msg;
+  document.body.appendChild(d); setTimeout(() => d.remove(), 1600);
+}
+
+async function refresh() {
+  if (tabId === null) return;
+  const s = await chrome.runtime.sendMessage({ kind: 'getState', tabId });
+  if (s) render(analyze(s));
+}
+
+document.querySelectorAll('nav button').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('nav button, .panel').forEach(x => x.classList.remove('on'));
+  b.classList.add('on'); $('#' + b.dataset.tab).classList.add('on');
+}));
+$('#theme').addEventListener('click', () => {
+  const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = next;
+  try { localStorage.setItem('tca-theme', next); } catch (e) {}
+});
+$('#rescan').addEventListener('click', () => { if (tabId !== null) chrome.tabs.reload(tabId); });
+$('#copy').addEventListener('click', async () => {
+  if (!last) return;
+  try { await navigator.clipboard.writeText(report(last)); toast('Report copied'); } catch (e) { toast('Could not copy'); }
+});
+
+(async () => {
+  tabId = await resolveTab();
+  await refresh();
+  setInterval(refresh, 1000);
+})();

@@ -1,0 +1,23 @@
+<!DOCTYPE html><html><head><title>Good site</title>
+<script>
+window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}
+gtag('consent','default',{ad_storage:'denied',analytics_storage:'denied',ad_user_data:'denied',ad_personalization:'denied',wait_for_update:500});
+</script>
+<script async src="https://consent.cookiebot.com/uc.js?cbid=test"></script>
+<script async src="https://www.googletagmanager.com/gtm.js?id=GTM-GOOD123"></script>
+<script>
+const ping=u=>new Image().src=u;
+setTimeout(()=>{dataLayer.push({event:'gtm.js'});ping('https://www.google-analytics.com/g/collect?v=2&tid=G-GOOD123&en=page_view&gcs=G100');},300);
+function accept(){
+  gtag('consent','update',{ad_storage:'granted',analytics_storage:'granted',ad_user_data:'granted',ad_personalization:'granted'});
+  document.cookie='_ga=GA1.1.123; path=/'; document.cookie='_fbp=fb.1.123; path=/';
+  ping('https://connect.facebook.net/en_US/fbevents.js');
+  ping('https://www.facebook.com/tr?id=999&ev=PageView');
+}
+function lead(){
+  dataLayer.push({event:'generate_lead'});
+  ping('https://www.google-analytics.com/g/collect?v=2&tid=G-GOOD123&en=generate_lead&gcs=G111');
+  ping('https://www.googleadservices.com/pagead/conversion/123456/?label=abcDEF&gcs=G111&em=tv.1~em.hashed');
+  ping('https://www.facebook.com/tr?id=999&ev=Lead');
+}
+</script></head><body><h1>Good site</h1><button id=acc onclick="accept()">Accept</button><button id=lead onclick="lead()">Submit lead</button></body></html>

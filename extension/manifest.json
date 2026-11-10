@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "Tag & Consent Auditor",
+  "version": "0.1.0",
+  "description": "Audit a page's measurement setup: which tags fire, how Consent Mode behaves, and what gets set before consent.",
+  "permissions": ["webRequest", "webNavigation", "storage", "tabs"],
+  "host_permissions": ["<all_urls>"],
+  "background": { "service_worker": "background.js" },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Audit this page's tags",
+    "default_icon": { "16": "icons/icon16.png", "32": "icons/icon32.png", "48": "icons/icon48.png", "128": "icons/icon128.png" }
+  },
+  "icons": { "16": "icons/icon16.png", "32": "icons/icon32.png", "48": "icons/icon48.png", "128": "icons/icon128.png" },
+  "content_scripts": [
+    { "matches": ["<all_urls>"], "js": ["inject-main.js"], "run_at": "document_start", "world": "MAIN" },
+    { "matches": ["<all_urls>"], "js": ["relay.js"], "run_at": "document_start" }
+  ]
+}
