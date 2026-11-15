@@ -5,7 +5,7 @@ A Chrome extension that audits a website's measurement setup while you browse it
 Open any page, click the extension, and it shows:
 
 - **Which tags are on the page and whether they actually fire.** Covers Google Tag Manager, GA4 (including server-side endpoints), Google Ads, Meta, LinkedIn, Microsoft UET, TikTok, HubSpot, Hotjar and Clarity.
-- **How Consent Mode behaves.** Default and updated states for all four v2 signals, whether the default is set before Google tags load, and Advanced vs Basic mode.
+- **How Consent Mode behaves.** Default and updated states for all four v2 signals, whether the default is set before Google tags fire, and Advanced vs Basic mode.
 - **What happens before consent.** Tracking cookies and ad pixels that fire before the visitor accepts.
 - **Conversion tracking.** Key events such as `generate_lead` and `purchase`, duplicate page views, and whether Enhanced Conversions data is attached.
 - **A score and a plain-English report** with a suggested fix for every issue, which you can copy in one click.

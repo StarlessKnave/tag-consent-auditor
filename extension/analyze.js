@@ -63,7 +63,6 @@ function analyze(s) {
   const gads = tagList.filter(t => t.vendor === 'gads');
   const gtm = tagList.filter(t => t.vendor === 'gtm');
   const googleReqs = reqs.filter(r => ['gtm', 'gtag', 'ga4', 'gads'].includes(r.vendor));
-  const firstGoogleT = googleReqs.length ? Math.min(...googleReqs.map(r => r.t)) : null;
   const anyMarketing = tagList.some(t => [...NON_GOOGLE_ADS, 'gads', 'ga4', 'hotjar', 'hubspot', 'clarity'].includes(t.vendor));
 
   // ---- events ----
@@ -118,8 +117,16 @@ function analyze(s) {
       add('pass', 'Consent default is set', states);
       const missing = ['ad_user_data', 'ad_personalization'].filter(k => !(k in def.params));
       if (missing.length) add('warn', 'Consent Mode v2 signals missing', `Default doesn't set ${missing.join(' and ')}.`, 'Add both v2 parameters to the default and update commands, or Google Ads audiences and conversions will be limited.');
-      const lateDefault = firstGoogleT !== null && def.t > firstGoogleT + 50;
-      if (lateDefault) add('fail', 'Consent default set after Google tags loaded', 'Tags ran before they knew the consent state.', 'Fire the consent default on the Consent Initialization trigger, or place it above the GTM snippet.');
+      // A library request (gtm.js, gtag/js) before the default is normal: a CMP template sets the default inside GTM
+      // on Consent Initialization, after the container has loaded. The default is late only if a Google tag has
+      // already sent data, or a gtag config/event command was queued ahead of it.
+      const defIdx = dl.findIndex(e => e.args && e.args[0] === 'consent' && e.args[1] === 'default');
+      const earlyHits = googleReqs.filter(r => r.kind === 'hit' && r.t < def.t - 50);
+      const earlyCmds = dl.slice(0, defIdx).filter(e => e.args && (e.args[0] === 'config' || e.args[0] === 'event'));
+      const lateDefault = earlyHits.length > 0 || earlyCmds.length > 0;
+      if (lateDefault) add('fail', 'Consent default set after Google tags fired',
+        earlyHits.length ? `${earlyHits.length} Google hit${earlyHits.length > 1 ? 's were' : ' was'} sent before the consent default.` : `gtag('${earlyCmds[0].args[0]}') was called before the consent default.`,
+        'Fire the consent default on the Consent Initialization trigger, or place it above the GTM or gtag snippet, before any config or event command.');
       // Advanced vs Basic can only be judged when the default came first; otherwise hits after it are not cookieless pings.
       if (deniedByDefault && !lateDefault) {
         const pings = reqs.filter(r => r.kind === 'hit' && (r.vendor === 'ga4' || r.vendor === 'gads') && r.t >= def.t && before(r.t));

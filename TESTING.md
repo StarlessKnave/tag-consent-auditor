@@ -39,7 +39,7 @@ These pages pretend to load Google, Meta and LinkedIn tags with fake IDs, so you
 2. In Chrome, open an **Incognito** window.
 3. **Bad site:** go to `http://localhost:8765/bad.html`, wait 2 seconds, click the extension icon.
    You should see a score of **18** and **3 critical issues**:
-   - Consent default set after Google tags loaded
+   - Consent default set after Google tags fired
    - 3 tracking cookies set before consent
    - Ad pixels fire before consent
    
