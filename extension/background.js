@@ -1,6 +1,6 @@
 // Records measurement-related network requests and page observations per tab.
 const tabs = {};
-const fresh = (url = '', t = Date.now()) => ({ url, started: t, requests: [], dl: [], cookies: {}, ids: [] });
+const fresh = (url = '', t = Date.now()) => ({ url, started: t, requests: [], dl: [], cookies: {}, ids: [], navs: [] });
 
 async function getTab(id) {
   if (!tabs[id]) {
@@ -140,6 +140,19 @@ chrome.webNavigation.onCommitted.addListener(d => {
   tabs[d.tabId] = nu;
   persist(d.tabId);
 });
+
+// Single-page apps change route without a real navigation. Record each change so page views can be judged per route.
+function onRoute(d) {
+  if (d.frameId !== 0) return;
+  getTab(d.tabId).then(s => {
+    if (!s.navs) s.navs = [];
+    if (s.navs.length < 200) s.navs.push({ t: d.timeStamp, url: d.url.slice(0, 800) });
+    s.url = d.url;
+    persist(d.tabId);
+  });
+}
+chrome.webNavigation.onHistoryStateUpdated.addListener(onRoute);
+chrome.webNavigation.onReferenceFragmentUpdated.addListener(onRoute);
 
 chrome.tabs.onRemoved.addListener(id => {
   delete tabs[id];

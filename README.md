@@ -5,9 +5,9 @@ A Chrome extension that audits a website's measurement setup while you browse it
 Open any page, click the extension, and it shows:
 
 - **Which tags are on the page and whether they actually fire.** Covers Google Tag Manager, GA4 (including server-side endpoints), Google Ads, Meta, LinkedIn, Microsoft UET, TikTok, HubSpot, Hotjar and Clarity.
-- **How Consent Mode behaves.** Default and updated states for all four v2 signals, whether the default is set before Google tags fire, and Advanced vs Basic mode.
-- **What happens before consent.** Tracking cookies and ad pixels that fire before the visitor accepts.
-- **Conversion tracking.** Key events such as `generate_lead` and `purchase`, duplicate page views, and whether Enhanced Conversions data is attached.
+- **How Consent Mode behaves.** Default and updated states for all four v2 signals, whether the default is set before Google tags fire, region-specific defaults, what the hits themselves carried (`gcd`), and Advanced vs Basic mode.
+- **What happens before consent.** Tracking cookies and ad pixels that fire before the visitor accepts, after a partial grant that doesn't cover them, or after consent is withdrawn.
+- **Conversion tracking.** Key events such as `generate_lead` and `purchase`, duplicate page views (counted per route in single-page apps), and whether Enhanced Conversions data is attached.
 - **A score and a plain-English report** with a suggested fix for every issue, which you can copy in one click.
 
 Everything runs locally in your browser. The extension only observes; it never changes what a page sends, and no data leaves your machine.
@@ -33,14 +33,15 @@ Full testing steps: see [TESTING.md](TESTING.md).
 
 ## How it works
 
-- `extension/inject-main.js` runs in the page and watches `dataLayer` pushes (including `gtag('consent', …)` commands) and cookies as they appear.
-- `extension/background.js` watches network requests and classifies them by vendor, tag ID, event name and consent state (`gcs`).
+- `extension/inject-main.js` runs in the page and watches `dataLayer` pushes (including `gtag('consent', …)` commands) and cookies as they appear. Custom data layer names (`&l=name` on the GTM snippet) are picked up automatically.
+- `extension/background.js` watches network requests and classifies them by vendor, tag ID, event name and consent state (`gcs`, `gcd`), and records route changes in single-page apps.
 - `extension/analyze.js` turns those observations into checks, a score and a timeline.
 - `extension/popup.html` / `popup.js` show the results live.
 
 ## Limitations
 
 - HttpOnly cookies aren't visible to page scripts, so they don't appear in the cookie list.
+- When consent defaults differ by region, the audit reflects the region you are browsing from.
 - Checks are based on public documentation and common best practice. They are a quick health check, not a legal compliance review.
 
 Built by [Matvey Lutsenko](https://matveylutsenko.com).

@@ -50,17 +50,24 @@ function render(a) {
   const latest = {};
   if (c.def) Object.assign(latest, c.def.params);
   c.updates.forEach(u => Object.assign(latest, u.params));
-  const early = a.cookies.filter(k => k.owner && !k.existing && c.def && (c.grantT === null || k.t < c.grantT));
-  const note = k => k.existing ? ' · earlier visit' : early.includes(k) ? ' · before consent' : '';
+  const note = k => k.existing ? ' · earlier visit' : k.early ? ' · without consent' : '';
+  const granted = ['ad_storage', 'analytics_storage'].filter(k => latest[k] === 'granted').length;
+  const choice = !c.updates.length ? 'Not yet'
+    : granted === 2 ? 'Granted at ' + rel(c.grantT ?? c.updates[0].t, a.started)
+    : granted === 1 ? 'Partly granted (' + (latest.ad_storage === 'granted' ? 'ads' : 'analytics') + ' only)'
+    : c.grantT ? 'Granted, then withdrawn' : 'Denied';
+  const sentDefault = c.sent && keys.some(k => c.sent[k].def);
   $('#consent').innerHTML = `
     <div class="sec">Overview</div>
     <div class="kv"><span>Consent platform</span><b>${esc(c.cmp.join(', ') || 'None detected')}</b>
-    <span>Default set</span><b>${c.def ? 'Yes, at ' + rel(c.def.t, a.started) : 'No'}</b>
-    <span>Choice made</span><b>${c.updates.length ? (c.grantT ? 'Granted at ' + rel(c.grantT, a.started) : 'Denied / updated') : 'Not yet'}</b></div>
+    <span>Default set</span><b>${c.def ? 'Yes, at ' + rel(c.def.t, a.started) + (c.def.regions ? ' · for ' + esc(c.def.regions.slice(0, 4).join(', ')) : '') : sentDefault ? 'Seen in Google hits only' : 'No'}</b>
+    <span>Choice made</span><b>${esc(choice)}</b></div>
     <div class="sec">Signals · default → current</div>
     <div class="kv">${keys.map(k => `<span>${k}</span><b>${st(c.def && c.def.params[k])} → ${st(latest[k])}</b>`).join('')}</div>
+    ${c.sent ? `<div class="sec">Signals · as sent in the latest Google hit</div>
+    <div class="kv">${keys.map(k => `<span>${k}</span><b>${st(c.sent[k].now) === '—' ? 'not set' : st(c.sent[k].now)}</b>`).join('')}</div>` : ''}
     <div class="sec">Cookies (${a.cookies.length})</div>
-    ${a.cookies.length ? a.cookies.map(k => `<div class="ck ${early.includes(k) ? 'early' : ''}"><b>${esc(k.name)}</b><i>${esc(k.owner || 'other')} · ${rel(k.t, a.started)}${note(k)}</i></div>`).join('') : '<div class="empty">No cookies readable by scripts.</div>'}`;
+    ${a.cookies.length ? a.cookies.map(k => `<div class="ck ${k.early ? 'early' : ''}"><b>${esc(k.name)}</b><i>${esc(k.owner || 'other')} · ${rel(k.t, a.started)}${note(k)}</i></div>`).join('') : '<div class="empty">No cookies readable by scripts.</div>'}`;
 
   $('#timeline').innerHTML = a.timeline.length ? a.timeline.slice(0, 200).map(e => `
     <div class="ev ${e.kind} ${e.beforeConsent && ['meta', 'linkedin', 'microsoft', 'tiktok'].includes(e.vendor) ? 'early' : ''}"><span class="ts">${rel(e.t, a.started)}</span>

@@ -41,15 +41,42 @@
     } catch (e) {}
   };
 
-  // Catch dataLayer even if the page creates it after we start.
-  let _dl = window.dataLayer;
-  hook(_dl);
+  // Watch a data layer by name, and catch it even if the page creates or replaces it after we start.
+  const watched = {};
+  const watch = name => {
+    if (watched[name] || !/^[A-Za-z_$][\w$]*$/.test(name)) return;
+    watched[name] = true;
+    let cur = window[name];
+    hook(cur);
+    try {
+      Object.defineProperty(window, name, {
+        configurable: true, enumerable: true,
+        get() { return cur; },
+        set(v) { cur = v; hook(v); }
+      });
+    } catch (e) {}
+  };
+  watch('dataLayer');
+
+  // Containers can use a custom data layer name, passed as &l=name on the gtm.js / gtag/js URL.
+  const fromScript = el => {
+    try {
+      const src = el.src || '';
+      if (!/\/gtm\.js|\/gtag\/js/.test(src)) return;
+      const name = new URL(src, location.href).searchParams.get('l');
+      if (name) watch(name);
+    } catch (e) {}
+  };
+  const scanLayers = () => {
+    try { document.querySelectorAll('script[src*="/gtm.js"],script[src*="/gtag/js"]').forEach(fromScript); } catch (e) {}
+  };
+  // Spot the script tag the moment it is added, so entries get accurate timestamps.
+  let observer = null;
   try {
-    Object.defineProperty(window, 'dataLayer', {
-      configurable: true, enumerable: true,
-      get() { return _dl; },
-      set(v) { _dl = v; hook(v); }
+    observer = new MutationObserver(list => {
+      for (const m of list) for (const n of m.addedNodes) if (n.nodeName === 'SCRIPT') fromScript(n);
     });
+    observer.observe(document, { childList: true, subtree: true });
   } catch (e) {}
 
   const cookieSeen = {};
@@ -73,10 +100,10 @@
     } catch (e) {}
   };
 
-  const tick = () => { scanCookies(); hook(window.dataLayer); scanIds(); };
+  const tick = () => { scanCookies(); scanLayers(); Object.keys(watched).forEach(n => { try { hook(window[n]); } catch (e) {} }); scanIds(); };
   send('start', { url: location.href });
   tick();
   // Fast polling while the page loads, then slower so consent clicks later on are still caught.
   let n = 0;
-  const fast = setInterval(() => { tick(); if (++n > 80) { clearInterval(fast); setInterval(tick, 1500); } }, 250);
+  const fast = setInterval(() => { tick(); if (++n > 80) { clearInterval(fast); if (observer) observer.disconnect(); setInterval(tick, 1500); } }, 250);
 })();
