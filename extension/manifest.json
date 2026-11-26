@@ -1,9 +1,10 @@
 {
   "manifest_version": 3,
   "name": "Tag & Consent Auditor",
-  "version": "0.1.0",
+  "version": "0.1.1",
+  "minimum_chrome_version": "111",
   "description": "Audit a page's measurement setup: which tags fire, how Consent Mode behaves, and what gets set before consent.",
-  "permissions": ["webRequest", "webNavigation", "storage", "tabs"],
+  "permissions": ["webRequest", "webNavigation", "storage"],
   "host_permissions": ["<all_urls>"],
   "background": { "service_worker": "background.js" },
   "action": {
