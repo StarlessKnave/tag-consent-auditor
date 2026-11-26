@@ -31,7 +31,7 @@ When you click **Copy report**, a plain-text summary is copied to your clipboard
 
 ## Permissions
 
-The extension asks for access to all websites, plus the `webRequest`, `webNavigation`, `storage` and `tabs` permissions. They are used only for the audit described above, and only on your device.
+The extension asks for access to all websites, plus the `webRequest`, `webNavigation` and `storage` permissions. They are used only for the audit described above, and only on your device.
 
 ## Third parties
 
